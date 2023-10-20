@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Messaging App</title>
+    <style>
+        /* Basic styling for the messaging app */
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #message-container {
+            width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+        #message-display {
+            height: 200px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            overflow-y: auto;
+        }
+        #message-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #send-button {
+            display: block;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="message-container">
+        <div id="message-display">
+            <!-- Messages will be displayed here -->
+            {% for message in messages %}
+                <p><strong>{{ message.sender }} : </strong>{{ message.message }}</p>
+            {% endfor %}
+        </div>
+        <textarea id="message-input" placeholder="Type your message..."></textarea>
+        <button id="send-button">Send</button>
+    </div>
+
+    <script>
+        // JavaScript code to handle message sending
+        const messageDisplay = document.getElementById('message-display');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+
+        sendButton.addEventListener('click', function () {
+            const message = messageInput.value.trim();
+            console.log(message)
+            console.log('{{ chat_id }}')
+            console.log('{{ username }}')
+            if (message !== '') {
+                // Send the message to a Flask function using a POST request (adjust the URL as needed)
+                fetch('/msg', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        chatID: '{{ chat_id }}',
+                        sender: '{{ username }}',
+                        message: message
+                    })
+                })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    // Clear the message input field
+                    messageInput.value = '';
+                    location.reload();
+                });
+            }
+        });
+
+        // Auto-scroll to the bottom of the message display
+        function scrollToBottom() {
+            messageDisplay.scrollTop = messageDisplay.scrollHeight;
+        }
+
+        messageInput.addEventListener('input', scrollToBottom);
+    </script>
+</body>
+</html>

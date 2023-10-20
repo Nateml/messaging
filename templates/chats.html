@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>List of Items</title>
+    <style>
+        /* Center the list */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* Style the list container */
+        .list-container {
+            text-align: center;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
+
+        /* Style the list items */
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            margin: 10px 0;
+            cursor: pointer;
+        }
+
+        /* Style for item hover (optional) */
+        li:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="list-container">
+        <h1>Chats</h1>
+        <ul>
+            {% for chat in data %}
+                <li data-item-id="{{ chat.id }}" class="clickable-item">{{ chat.name }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <script>
+        // Add a click event listener to the clickable items
+        document.addEventListener("DOMContentLoaded", function () {
+            const clickableItems = document.querySelectorAll(".clickable-item");
+            clickableItems.forEach(function (item) {
+                item.addEventListener("click", function () {
+                    // Get the item's ID from the "data-item-id" attribute
+                    const itemId = item.getAttribute("data-item-id");
+                    window.location.href = `/messages/${itemId}`;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

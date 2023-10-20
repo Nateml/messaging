@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template, session, redirect, url_for
+from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
 import os
@@ -16,11 +17,48 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://root:{db_password}@localhost:3306/MysticQuest'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Configure Flask-Session
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_TYPE"] = "filesystem"
+Session(app)
+
 db = SQLAlchemy(app)
 
 @app.route('/')
 def hello_world():
-    return 'Hello, World! :)'
+    return render_template('index.html')
+
+@app.route('/login', methods=['POST'])
+def login():
+    """
+    Logs a user in by setting the session variable 'username' to the given username.
+
+    Args:
+        username (str): The username of the user to log in.
+
+    Returns:
+        A JSON response indicating whether the user was logged in successfully or not.
+    """
+    
+    data = request.get_json()
+    username = data['username']
+    print(f'username: {username}')
+    session['username'] = username
+    return jsonify({"message": "Logged in successfully."})
+
+def set_chat(chat_id : int):
+    """
+    Sets the session variable 'chat' to the given chat ID.
+
+    Args:
+        chat_id (int): The ID of the chat to set the session variable to.
+
+    Returns:
+        A JSON response indicating whether the chat was set successfully or not.
+    """
+    
+    session['chat'] = chat_id
+    return jsonify({"message": "Chat set successfully."})
 
 @app.route('/users')
 def getUsers():
@@ -77,7 +115,33 @@ def send_message():
 
     return jsonify({"message": "Message sent successfully.", "messageID": new_message.id})
 
-@app.route('/chats/<string:username>')
+@app.route('/chats')
+def get_chats():
+    """
+    Returns a list of chats associated with the currently logged in user.
+
+    Returns:
+    - If successful, returns a JSON object containing a list of dictionaries, where each dictionary represents a chat.
+        Each dictionary contains the following keys:
+            - chatID (int): The ID of the chat.
+            - name (str): The name of the chat.
+            - isGroup (bool): A boolean value indicating whether the chat is a group chat or not.
+    - If unsuccessful, returns a JSON object with an error message and a 400 status code.
+
+    Parameters:
+    - None
+
+    Raises:
+    - None
+    """
+    
+    if 'username' not in session:
+        return redirect(url_for('hello_world'));
+
+    chats = Player.query.filter_by(username=session['username']).first().chats
+    result = [{"id":chat.id, "name":chat.name, "isGroup":chat.isGroup} for chat in chats]
+    return render_template("chats.html", data=result)
+
 def get_chats(username : str):
         """
         Returns a list of chats associated with the given username.
@@ -94,8 +158,8 @@ def get_chats(username : str):
         """
          
         chats = Player.query.filter_by(username=username).first().chats
-        result = [{"chatID":chat.id, "name":chat.name, "isGroup":chat.isGroup} for chat in chats]
-        return jsonify(result)
+        result = [{"id":chat.id, "name":chat.name, "isGroup":chat.isGroup} for chat in chats]
+        return render_template("chats.html", data=result)
 
 @app.route('/newchat/<string:name>/<int:isGroup>')
 def create_chat(name : str, isGroup : int):
@@ -145,8 +209,8 @@ def add_member_to_chat(chatID : int, username : str):
 
     return jsonify({"message": "Player added to chat successfully."})
 
-@app.route('/messages/<int:chatID>/<int:limit>')
-def get_messages_from_chat(chatID : int, limit : int):
+@app.route('/messages/<int:chat_id>')
+def get_messages_from_chat(chat_id : int):
     """
     Returns a list of messages from a specific chat, limited by the given limit parameter.
     
@@ -157,9 +221,12 @@ def get_messages_from_chat(chatID : int, limit : int):
     Returns:
     A JSON object containing a list of messages, each with a messageID, sender, message, and createdAt field.
     """
-    messages = Chat.query.filter_by(id=chatID).first().messages
-    result = [{"messageID":message.id, "sender":message.sender, "message":message.message, "createdAt":message.createdAt} for message in messages[:limit]]
-    return jsonify(result)
+    limit = 10;
+    messages = Chat.query.filter_by(id=chat_id).first().messages
+    print(messages)
+    result = [{"messageID":message.id, "sender":message.sender, "message":message.message, "createdAt":message.createdAt} for message in messages[-limit:]]
+    print(f'chat id : {chat_id}')
+    return render_template("messages.html", chat_id=chat_id, username=session['username'], messages=result)    
 
 @app.route('/messages/pretty/<int:chatID>/<int:limit>')
 def get_pretty_messages_from_chat(chatID : int, limit : int):
