@@ -39,14 +39,19 @@
             border-radius: 5px;
             cursor: pointer;
         }
+        .timestamp {
+            font-size: 12px;
+            color: #999;
+        }
     </style>
 </head>
 <body>
     <div id="message-container">
+        <h1>{{ chat.name }}</h1>
         <div id="message-display">
             <!-- Messages will be displayed here -->
             {% for message in messages %}
-                <p><strong>{{ message.sender }} : </strong>{{ message.message }}</p>
+                <p><strong>{{ message.sender }} : </strong>{{ message.message }} <span class="timestamp">@ {{ message.createdAt }}</span></p>
             {% endfor %}
         </div>
         <textarea id="message-input" placeholder="Type your message..."></textarea>
@@ -62,7 +67,7 @@
         sendButton.addEventListener('click', function () {
             const message = messageInput.value.trim();
             console.log(message)
-            console.log('{{ chat_id }}')
+            console.log('{{ chat.id }}')
             console.log('{{ username }}')
             if (message !== '') {
                 // Send the message to a Flask function using a POST request (adjust the URL as needed)
@@ -72,7 +77,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        chatID: '{{ chat_id }}',
+                        chatID: '{{ chat.id }}',
                         sender: '{{ username }}',
                         message: message
                     })

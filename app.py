@@ -199,10 +199,9 @@ def get_messages_from_chat(chat_id : int):
     """
     limit = 10;
     messages = Chat.query.filter_by(id=chat_id).first().messages
-    print(messages)
     result = [{"messageID":message.id, "sender":message.sender, "message":message.message, "createdAt":message.createdAt} for message in messages[-limit:]]
-    print(f'chat id : {chat_id}')
-    return render_template("messages.html", chat_id=chat_id, username=session['username'], messages=result)    
+    chat = {'id' : chat_id, 'name' : Chat.query.filter_by(id=chat_id).first().name}
+    return render_template("messages.html", chat=chat, username=session['username'], messages=result)    
 
 @app.route('/messages/pretty/<int:chatID>/<int:limit>')
 def get_pretty_messages_from_chat(chatID : int, limit : int):
